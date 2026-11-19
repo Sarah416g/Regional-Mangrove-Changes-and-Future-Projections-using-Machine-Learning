@@ -1,7 +1,16 @@
-"""Analyze country-level mangrove area from 1985 through 2025.
+"""
+Name: Sarah Coulibaly
+Course: CSE 163
+Section: AA
 
-Run this file from the Python Files folder with: python mangrove_analysis.py
-Graphs and tables are saved in the eda_outputs folder.
+Analyzes annual country-level mangrove extent from 1985 to 2025.
+
+The program reads Mangrove_Extent.csv, which contains country ISO codes,
+country names, and annual mangrove areas in hectares. It uses pandas
+DataFrames to clean numeric values, calculate annual and total changes,
+and summarize global and country-level trends. The program prints
+statistics and saves six PNG graphs and summary CSV files to eda_outputs.
+
 """
 
 import os
@@ -15,13 +24,23 @@ DATA_FILE = "../data/Mangrove_Extent.csv"
 OUTPUT_FOLDER = "eda_outputs"
 
 
-def get_years(data):
-    """Return the year columns, ordered from earliest to latest."""
+def get_years(data: pd.DataFrame) -> list[str]:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing country information
+    and yearly mangrove extent. Selects and sorts the year columns and
+    returns a list (list[str]) of year names in chronological order.
+    """
     return sorted(data.columns[2:])
 
 
-def clean_data(data):
-    """Keep country rows and convert mangrove areas to numbers."""
+def clean_data(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing raw mangrove extent
+    data. Removes rows without country identifiers, removes commas from
+    numeric values, and converts yearly extents to numbers. Returns a
+    cleaned DataFrame (pd.DataFrame) with a reset index. Invalid numeric
+    values are converted to NaN.
+    """
     # Rows without an ISO code are blank or summary rows, not countries.
     countries = data.dropna(subset=["iso", "cnty_name"]).copy()
     years = get_years(countries)
@@ -38,28 +57,51 @@ def clean_data(data):
     return countries.reset_index(drop=True)
 
 
-def annual_changes(data):
-    """Calculate each country's change from the previous year in hectares."""
+def annual_changes(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Calculates the difference in area between consecutive
+    years for each country and returns a DataFrame (pd.DataFrame) of
+    annual changes in hectares. The first year is NaN since there is
+    no previous year to compare.
+    """
     return data[get_years(data)].diff(axis=1)
 
 
-def annual_variability(data):
-    """Measure how much each country's annual changes vary over time."""
+def annual_variability(data: pd.DataFrame) -> pd.Series:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Calculates the standard deviation of annual changes
+    for each country and returns a Series (pd.Series) of variability
+    values in hectares indexed by country name.
+    """
     variability = annual_changes(data).std(axis=1)
     variability.index = data["cnty_name"]
     return variability
 
 
-def percent_changes(data):
-    """Calculate annual percentage changes, keeping undefined values empty."""
+def percent_changes(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Calculates the annual percentage change for each
+    country and returns a DataFrame (pd.DataFrame) of percentage changes.
+    Undefined percentage changes, including division by zero, are NaN.
+    """
     changes = data[get_years(data)].pct_change(
         axis=1, fill_method=None
     ) * 100
     return changes.replace([np.inf, -np.inf], np.nan)
 
 
-def country_extremes(data):
-    """Find each country's largest one-year increase and decrease."""
+def country_extremes(
+    data: pd.DataFrame
+) -> tuple[pd.Series, pd.Series]:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Identifies the largest annual increase and decrease
+    for each country and returns two Series (pd.Series) of changes in
+    hectares indexed by country name.
+    """
     changes = annual_changes(data)
     increases = changes.max(axis=1)
     decreases = changes.min(axis=1)
@@ -68,21 +110,39 @@ def country_extremes(data):
     return increases, decreases
 
 
-def net_changes(data):
-    """Calculate each country's change between 1985 and 2025."""
+def net_changes(data: pd.DataFrame) -> pd.Series:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Subtracts the first year's area from the last year's
+    area for each country and returns a Series (pd.Series) of net changes
+    in hectares indexed by country name. Missing endpoint values are
+    excluded.
+    """
     years = get_years(data)
     changes = data[years[-1]] - data[years[0]]
     changes.index = data["cnty_name"]
     return changes.dropna()
 
 
-def global_extent(data):
-    """Sum the mangrove area of all countries for each year."""
+def global_extent(data: pd.DataFrame) -> pd.Series:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned country-level
+    mangrove extent data. Sums the area across countries for each year
+    and returns a Series (pd.Series) of global mangrove extent in hectares.
+    """
     return data[get_years(data)].sum(axis=0)
 
 
-def global_gains_losses(data):
-    """Total positive and negative country changes for each year."""
+def global_gains_losses(
+    data: pd.DataFrame
+) -> tuple[pd.Series, pd.Series]:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Calculates annual changes and separately sums gains
+    and loss amounts across countries. Returns two Series (pd.Series)
+    of annual gains and loss magnitudes in hectares, excluding the first
+    year because there is no preceding year.
+    """
     # Leave out 1985 because it has no earlier year for comparison.
     changes = annual_changes(data).iloc[:, 1:]
     gains = changes.clip(lower=0).sum(axis=0)
@@ -90,8 +150,15 @@ def global_gains_losses(data):
     return gains, losses
 
 
-def save_country_bar(values, title, ylabel, filename):
-    """Save a bar graph comparing up to ten countries."""
+def save_country_bar(
+    values: pd.Series, title: str, ylabel: str, filename: str
+) -> None:
+    """
+    Takes in a Series (pd.Series) of country values and three strings
+    (str) for the graph title, y-axis label, and filename. Creates and
+    saves a country bar chart as a PNG file and returns None. If the
+    Series is empty, no chart is saved.
+    """
     if values.empty:
         return
 
@@ -106,11 +173,13 @@ def save_country_bar(values, title, ylabel, filename):
     plt.close()
 
 
-def save_plots(data):
-    """Save six graphs showing global trends and country-level changes.
-
-    The graphs show global extent, annual gains and losses, largest one-year
-    increases, largest one-year decreases, net gains, and net losses.
+def save_plots(data: pd.DataFrame) -> None:
+    """
+    Takes in a DataFrame (pd.DataFrame) containing cleaned mangrove
+    extent data. Creates six graphs showing global extent, annual gains
+    and losses, the largest annual increases and decreases by country,
+    and the largest net gains and losses by country. Saves the graphs
+    as PNG files and returns None.
     """
     years = get_years(data)
     totals = global_extent(data)
@@ -184,8 +253,14 @@ def save_plots(data):
     )
 
 
-def main():
-    """Load the data, print summary statistics, and save graphs and tables."""
+def main() -> None:
+    """
+    Takes in no parameters and reads the mangrove extent CSV file.
+    Cleans the data, calculates descriptive statistics and changes in
+    mangrove area, and identifies countries with the greatest gains and
+    losses. Prints the results, saves summary CSV files and six graphs,
+    and returns None.
+    """
     raw = pd.read_csv(DATA_FILE)
     data = clean_data(raw)
     years = get_years(data)

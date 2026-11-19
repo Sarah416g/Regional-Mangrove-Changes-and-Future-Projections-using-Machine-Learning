@@ -1,7 +1,13 @@
 """
-Test mangrove calculations using small datasets with known results.
+Test the mangrove analysis functions with known example values.
 
-Run this file with: python test_mangrove_analysis.py
+The tests create small pandas DataFrames representing three fictional
+countries, plus blank and summary rows. They check cleaning, changes,
+variability, yearly totals, missing values, and country rankings using
+assert statements. No external CSV file is needed for these tests.
+
+Run this script from the Python Files folder with:
+    python test_mangrove_analysis.py
 """
 
 import pandas as pd
@@ -12,9 +18,11 @@ from mangrove_analysis import (clean_data, annual_changes, annual_variability,
                                global_gains_losses)
 
 
-def sample_data():
+def sample_data() -> pd.DataFrame:
     """
-    Create three countries and two non-country rows for testing.
+    Takes in no parameters and creates a DataFrame (pd.DataFrame) of
+    sample mangrove extent values for three fictional countries, a
+    summary row, and a blank row. Returns the DataFrame for testing.
     """
     return pd.DataFrame({
         "iso": ["MGV", "BYL", "CST", None, None],
@@ -25,9 +33,12 @@ def sample_data():
     })
 
 
-def test_cleaning():
+def test_cleaning() -> None:
     """
-    Check that summary rows are removed and comma values become numbers.
+    Takes in no parameters and uses the sample DataFrame to test
+    whether non-country rows are removed and numeric values are
+    converted correctly. Checks expected results with assert statements
+    and returns None. A failed assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     assert len(data) == 3
@@ -36,9 +47,12 @@ def test_cleaning():
     assert data.loc[1, "1986"] == 80
 
 
-def test_annual_changes():
+def test_annual_changes() -> None:
     """
-    Compare year-to-year changes with answers calculated by hand.
+    Takes in no parameters and tests annual change calculations using
+    known values from the sample DataFrame. Checks increases, decreases,
+    and the missing first-year change with assert statements and returns
+    None. A failed assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     changes = annual_changes(data)
@@ -49,9 +63,12 @@ def test_annual_changes():
     assert changes.loc[2, "1987"] == 5
 
 
-def test_annual_variability():
+def test_annual_variability() -> None:
     """
-    Check the spread of a country's year-to-year changes.
+    Takes in no parameters and tests the standard deviation of annual
+    mangrove changes using the sample DataFrame. Compares calculated
+    values with expected results using assert statements and returns
+    None. A failed assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     variability = annual_variability(data)
@@ -59,9 +76,12 @@ def test_annual_variability():
     assert abs(variability["Bayland"] - 42.426) < 0.01
 
 
-def test_percent_changes():
+def test_percent_changes() -> None:
     """
-    Check percentage changes and undefined changes from zero.
+    Takes in no parameters and tests annual percentage changes using
+    known values from the sample DataFrame. Checks expected percentages
+    and division by zero with assert statements and returns None.
+    A failed assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     changes = percent_changes(data)
@@ -70,9 +90,12 @@ def test_percent_changes():
     assert pd.isna(changes.loc[2, "1987"])
 
 
-def test_country_extremes():
+def test_country_extremes() -> None:
     """
-    Check the greatest one-year gains and losses for each country.
+    Takes in no parameters and tests each fictional country's largest
+    annual increase and decrease. Compares calculated results with known
+    values using assert statements and returns None. A failed assertion
+    raises an AssertionError.
     """
     data = clean_data(sample_data())
     increases, decreases = country_extremes(data)
@@ -82,9 +105,12 @@ def test_country_extremes():
     assert decreases["Bayland"] == -20
 
 
-def test_net_changes():
+def test_net_changes() -> None:
     """
-    Check that overall change is final year minus starting year.
+    Takes in no parameters and tests net mangrove changes between the
+    first and last years in the sample DataFrame. Compares changes with
+    expected values using assert statements and returns None. A failed
+    assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     changes = net_changes(data)
@@ -93,9 +119,12 @@ def test_net_changes():
     assert changes["Coastaria"] == 5
 
 
-def test_global_extent():
+def test_global_extent() -> None:
     """
-    Check yearly totals without counting the summary row twice.
+    Takes in no parameters and tests the calculation of global
+    mangrove extent using sample country values. Checks yearly totals
+    without counting the summary row using assert statements and
+    returns None. A failed assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     totals = global_extent(data)
@@ -104,9 +133,12 @@ def test_global_extent():
     assert totals["1987"] == 1175
 
 
-def test_global_gains_losses():
+def test_global_gains_losses() -> None:
     """
-    Check summed increases and decreases for consecutive years.
+    Takes in no parameters and tests annual global gains and losses
+    using the sample DataFrame. Compares summed gains and loss amounts
+    with expected values using assert statements and returns None.
+    A failed assertion raises an AssertionError.
     """
     data = clean_data(sample_data())
     gains, losses = global_gains_losses(data)
@@ -116,9 +148,12 @@ def test_global_gains_losses():
     assert losses["1987"] == 50
 
 
-def test_missing_year():
+def test_missing_year() -> None:
     """
-    Make sure missing data does not create an incorrect annual change.
+    Takes in no parameters and creates sample country data with a
+    missing yearly value. Checks whether changes involving the missing
+    year are NaN using assert statements and returns None. A failed
+    assertion raises an AssertionError.
     """
     raw = pd.DataFrame({
         "iso": ["MGV"],
@@ -133,9 +168,12 @@ def test_missing_year():
     assert pd.isna(changes.loc[0, "1987"])
 
 
-def main():
+def main() -> None:
     """
-    Run the tests and report whether they passed.
+    Takes in no parameters and runs all nine testing functions to
+    verify mangrove analysis calculations. Prints a success message
+    if all assertions pass and returns None. A failed assertion
+    stops the program.
     """
     test_cleaning()
     test_annual_changes()
