@@ -1,6 +1,6 @@
 """Analyze country-level mangrove area from 1985 through 2025.
 
-Run this file from the project folder with: python mangrove_analysis.py
+Run this file from the Python Files folder with: python mangrove_analysis.py
 Graphs and tables are saved in the eda_outputs folder.
 """
 
@@ -133,8 +133,8 @@ def save_plots(data):
     # 2. Compare yearly increases and decreases across all countries.
     # Both lines show positive magnitudes to make them easier to compare.
     plt.figure(figsize=(11, 5))
-    plt.plot(gains.index, gains.values, label="Annual Gains")
-    plt.plot(losses.index, losses.values, label="Annual Losses")
+    plt.plot(gains.index, gains.values, label="Annual Gains", color="green")
+    plt.plot(losses.index, losses.values, label="Annual Losses", color="red")
     plt.xlabel("Year")
     plt.ylabel("Annual Mangrove Extent Change (ha)")
     plt.title("Global Annual Mangrove Gains and Losses (1986-2025)")
@@ -174,12 +174,12 @@ def save_plots(data):
     )
 
     # 6. Countries with the greatest overall losses from 1985 to 2025.
-    # Keep losses negative because this graph shows net change.
+    # Display loss amounts as positive values so bars extend upward.
     biggest_losses = total_changes[total_changes < 0].nsmallest(10)
     save_country_bar(
-        biggest_losses,
+        biggest_losses.abs(),
         "Top 10 Countries by Net Mangrove Loss (1985-2025)",
-        "Net Change in Mangrove Extent (ha)",
+        "Net Mangrove Loss (ha)",
         "06_net_losses.png"
     )
 
