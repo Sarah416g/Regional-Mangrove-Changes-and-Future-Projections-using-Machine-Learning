@@ -1,4 +1,5 @@
-"""Analyze country-level mangrove area from 1985 through 2025.
+"""
+Analyze country-level mangrove area from 1985 through 2025.
 
 Run this file from the project folder with: python mangrove_analysis.py
 Graphs and tables are saved in the eda_outputs folder.
@@ -16,12 +17,16 @@ OUTPUT_FOLDER = "eda_outputs"
 
 
 def get_years(data):
-    """Return the year columns, ordered from earliest to latest."""
+    """
+    Return the year columns, ordered from earliest to latest.
+    """
     return sorted(data.columns[2:])
 
 
 def clean_data(data):
-    """Keep country rows and convert mangrove areas to numbers."""
+    """
+    Keep country rows and convert mangrove areas to numbers.
+    """
     # Rows without an ISO code are blank or summary rows, not countries.
     countries = data.dropna(subset=["iso", "cnty_name"]).copy()
     years = get_years(countries)
@@ -39,19 +44,25 @@ def clean_data(data):
 
 
 def annual_changes(data):
-    """Calculate each country's change from the previous year in hectares."""
+    """
+    Calculate each country's change from the previous year in hectares.
+    """
     return data[get_years(data)].diff(axis=1)
 
 
 def annual_variability(data):
-    """Measure how much each country's annual changes vary over time."""
+    """
+    Measure how much each country's annual changes vary over time.
+    """
     variability = annual_changes(data).std(axis=1)
     variability.index = data["cnty_name"]
     return variability
 
 
 def percent_changes(data):
-    """Calculate annual percentage changes, keeping undefined values empty."""
+    """
+    Calculate annual percentage changes, keeping undefined values empty.
+    """
     changes = data[get_years(data)].pct_change(
         axis=1, fill_method=None
     ) * 100
@@ -59,7 +70,9 @@ def percent_changes(data):
 
 
 def country_extremes(data):
-    """Find each country's largest one-year increase and decrease."""
+    """
+    Find each country's largest one-year increase and decrease.
+    """
     changes = annual_changes(data)
     increases = changes.max(axis=1)
     decreases = changes.min(axis=1)
@@ -69,7 +82,9 @@ def country_extremes(data):
 
 
 def net_changes(data):
-    """Calculate each country's change between 1985 and 2025."""
+    """
+    Calculate each country's change between 1985 and 2025.
+    """
     years = get_years(data)
     changes = data[years[-1]] - data[years[0]]
     changes.index = data["cnty_name"]
@@ -77,12 +92,16 @@ def net_changes(data):
 
 
 def global_extent(data):
-    """Sum the mangrove area of all countries for each year."""
+    """
+    Sum the mangrove area of all countries for each year.
+    """
     return data[get_years(data)].sum(axis=0)
 
 
 def global_gains_losses(data):
-    """Total positive and negative country changes for each year."""
+    """
+    Total positive and negative country changes for each year.
+    """
     # Leave out 1985 because it has no earlier year for comparison.
     changes = annual_changes(data).iloc[:, 1:]
     gains = changes.clip(lower=0).sum(axis=0)
@@ -91,7 +110,9 @@ def global_gains_losses(data):
 
 
 def save_country_bar(values, title, ylabel, filename):
-    """Save a bar graph comparing up to ten countries."""
+    """
+    Save a bar graph comparing up to ten countries.
+    """
     if values.empty:
         return
 
@@ -107,7 +128,8 @@ def save_country_bar(values, title, ylabel, filename):
 
 
 def save_plots(data):
-    """Save six graphs showing global trends and country-level changes.
+    """
+    Save six graphs showing global trends and country-level changes.
 
     The graphs show global extent, annual gains and losses, largest one-year
     increases, largest one-year decreases, net gains, and net losses.
